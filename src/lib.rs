@@ -245,10 +245,16 @@ impl <'a> HidDevice<'a> {
         }
     }
 
-    pub fn get_feature_report(&self, report: u8, data: &mut [u8]) -> usize {
-        data[0] = report;
-        unsafe {
-            ffi::hid_get_feature_report(self._hid_device, data.as_mut_ptr(), data.len() as size_t) as usize
+    pub fn get_feature_report(&mut self, report: u8) -> Option<&[u8]> {
+        self._read_buffer[0] = report;
+        let actual_size = unsafe {
+            ffi::hid_get_feature_report(self._hid_device, self._read_buffer.as_mut_ptr(), (self._read_buffer.len()-1) as size_t)
+        };
+
+        if actual_size == 0 {
+            None
+        } else {
+            Some(&self._read_buffer[1..actual_size as usize])
         }
     }
 }
